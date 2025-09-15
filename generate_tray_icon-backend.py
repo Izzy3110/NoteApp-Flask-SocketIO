@@ -11,7 +11,7 @@ draw = ImageDraw.Draw(img)
 border = 2
 draw.rectangle(
     [border, border, size[0] - border - 1, size[1] - border - 1],
-    fill="white",
+    fill="blue",
     outline="black"
 )
 
@@ -20,7 +20,7 @@ circle_margin = 6
 draw.ellipse(
     [border + circle_margin, border + circle_margin,
      size[0] - border - circle_margin - 1, size[1] - border - circle_margin - 1],
-    fill="green",
+    fill="white",
     outline="black"
 )
 
@@ -29,7 +29,7 @@ red_margin = circle_margin + 6  # distance from blue circle edge
 draw.ellipse(
     [border + red_margin, border + red_margin,
      size[0] - border - red_margin - 1, size[1] - border - red_margin - 1],
-    fill="yellow"
+    fill="red"
 )
 
 # Save the image

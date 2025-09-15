@@ -11,21 +11,25 @@ from flask_socketio import SocketIO, emit
 if getattr(sys, 'frozen', False):
     template_folder = os.path.join(sys._MEIPASS, 'templates')
     static_folder = os.path.join(sys._MEIPASS, 'static')
+    exe_dir = os.path.dirname(sys.executable)
     app = Flask(__name__, template_folder=template_folder, static_folder=static_folder)
 else:
     app = Flask(__name__)
+    exe_dir = os.path.abspath(".")
+
+# Ensure 'instance' folder exists
+instance_dir = exe_dir
+os.makedirs(instance_dir, exist_ok=True)
 
 app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app, async_mode='threading')
 
 # --- Database setup ---
-db_path = os.path.join(
-    sys._MEIPASS, 'instance', 'NoteApp.db'
-) if getattr(sys, 'frozen', False) else os.path.join(app.root_path, 'instance', 'NoteApp.db')
-
+db_path = os.path.join(instance_dir, "NoteApp.db")
 app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{db_path}"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
+
 
 # --- Models ---
 class Note(db.Model):
@@ -33,8 +37,10 @@ class Note(db.Model):
     category = db.Column(db.String(200), nullable=False)
     description = db.Column(db.String(200), nullable=False)
 
+
 with app.app_context():
     db.create_all()
+
 
 # --- Routes ---
 @app.route("/submit", methods=["POST"])
@@ -45,10 +51,12 @@ def submit():
     db.session.commit()
     return jsonify({"status": "ok", "id": note.id})
 
+
 @app.route("/notes", methods=["GET"])
 def get_notes():
     notes = Note.query.all()
     return jsonify([{"id": n.id, "category": n.category, "description": n.description} for n in notes])
+
 
 @app.route("/notes/<int:note_id>", methods=["PUT"])
 def update_note(note_id):
@@ -61,6 +69,7 @@ def update_note(note_id):
     db.session.commit()
     return jsonify({"status": "ok"})
 
+
 @app.route("/notes/<int:note_id>", methods=["DELETE"])
 def delete_note(note_id):
     note = Note.query.get(note_id)
@@ -70,9 +79,11 @@ def delete_note(note_id):
     db.session.commit()
     return jsonify({"status": "ok"})
 
+
 @app.route("/")
 def index():
     return render_template("index.html")
+
 
 # --- PyInstaller resource helper ---
 def resource_path(relative_path: str) -> str:
@@ -80,13 +91,16 @@ def resource_path(relative_path: str) -> str:
         return os.path.join(sys._MEIPASS, relative_path)
     return os.path.join(os.path.abspath("."), relative_path)
 
+
 # --- Flask server in a thread ---
 def run_flask():
     socketio.run(app, host="0.0.0.0", port=5000, debug=False, allow_unsafe_werkzeug=True)
 
+
 # --- System tray ---
-def quit_app(icon, item):
-    icon.stop()
+def quit_app(icon_, item):
+    icon_.stop()
+
 
 tray_icon = Image.open(resource_path("tray_icon-backend.png"))
 menu = Menu(MenuItem("Quit", quit_app))

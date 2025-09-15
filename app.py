@@ -1,9 +1,12 @@
 # app.py — Windows only
+import os
 import sys
 import ctypes
 from ctypes import wintypes
 import requests
 from PySide6 import QtCore, QtWidgets
+from PySide6.QtGui import QIcon, QAction
+from PySide6.QtWidgets import QApplication, QSystemTrayIcon, QMenu
 
 # WinAPI constants
 user32 = ctypes.windll.user32
@@ -141,10 +144,42 @@ class InputWindow(QtWidgets.QWidget):
         self.hide()
 
 
+def resource_path(relative_path: str) -> str:
+    if hasattr(sys, '_MEIPASS'):
+        # PyInstaller bundle
+        return os.path.join(sys._MEIPASS, relative_path)
+    return os.path.join(os.path.abspath("."), relative_path)
+
+
 def main():
-    app = QtWidgets.QApplication(sys.argv)
+    app = QApplication(sys.argv)
+    app.setQuitOnLastWindowClosed(False)
+
+    icon_path = resource_path("tray_icon.png")
+    icon = QIcon(icon_path)
+
+    # Create the tray
+    tray = QSystemTrayIcon()
+    tray.setIcon(icon)
+    tray.setVisible(True)
+
+    # Create the menu
+    menu = QMenu()
+    action = QAction("A menu item")
+    menu.addAction(action)
+
+    # Add a Quit option to the menu.
+    quit_action = QAction("Quit")
+    quit_action.triggered.connect(app.quit)
+    menu.addAction(quit_action)
+
+    # Add the menu to the tray
+    tray.setContextMenu(menu)
+
     window = InputWindow()
     window.hide()
+
+    window.toggle_visibility()
 
     # Ensure a native handle exists for the widget
     hwnd = int(window.winId())

@@ -12,15 +12,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
     <script type="text/javascript" charset="utf-8">
         var socket = io();
-        socket.on('connect', function() {
-            socket.emit('my event', {data: 'I\'m connected!'});
-        });
 
-        socket.on('my_response', function(msg, cb) {
-            $('#log').append('<br>' + $('<div/>').text(moment().format() + ': ' + msg.data.data).html());
-            if (cb)
-                cb();
-        });
     </script>
     <script src="{{ url_for('static', filename='moment-with-locales.js') }}"></script>
 
@@ -82,6 +74,15 @@ function autoSizeTextarea(textarea) {
 
 $(document).ready(function() {
 
+        socket.on('connect', function() {
+            socket.emit('my event', {data: 'I\'m connected!'});
+        });
+
+        socket.on('my_response', function(msg, cb) {
+            $('#log').append('<br>' + $('<div/>').text(moment().format() + ': ' + msg.data).html());
+            if (cb)
+                cb();
+        });
 
     var table = $('#notesTable').DataTable({
         ajax: {
@@ -109,7 +110,7 @@ $(document).ready(function() {
     });
 
     socket.emit('message', {data: 'loaded!'});
-console.log("loaded!")
+    console.log("loaded!")
 
     function editableCell(data, type, row, meta) {
         // Use textarea for the description column (column index 2)

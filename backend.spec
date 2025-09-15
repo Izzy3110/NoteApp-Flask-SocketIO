@@ -9,7 +9,6 @@ a = Analysis(
         ('templates', 'templates'),  # Include templates folder
         ('static', 'static'),        # Include static folder
         ('tray_icon.png', '.'),      # Your tray icon
-        ('instance/NoteApp.db', 'instance')  # Optional: if you want to bundle the database
     ],
     hiddenimports=[],
     hookspath=[],

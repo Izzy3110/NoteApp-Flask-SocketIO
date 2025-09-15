@@ -10,4 +10,9 @@ call build_exe-backend.bat
 
 echo.
 echo All builds complete!
+
+echo.
+echo Copying config...
+xcopy /y ".env" "dist\"
+
 pause

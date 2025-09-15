@@ -1,12 +1,14 @@
 # -*- mode: python ; coding: utf-8 -*-
 
-
 a = Analysis(
     ['app.py'],
     pathex=[],
     binaries=[],
-    datas=[('tray_icon.png', '.')],  # correct: list of tuples
-    hiddenimports=[],
+    datas=[
+        ('tray_icon.png', '.'),  # existing tray icon
+        ('.env', '.'),           # include .env next to the exe
+    ],
+    hiddenimports=['dotenv'],   # ensure python-dotenv is included
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],

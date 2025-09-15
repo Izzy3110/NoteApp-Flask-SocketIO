@@ -1,11 +1,14 @@
 import os
 import sys
 import threading
+import webbrowser
+
 from pystray import Icon, MenuItem, Menu
 from PIL import Image
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_socketio import SocketIO, emit
+from dotenv import load_dotenv
 
 # --- Flask app setup ---
 if getattr(sys, 'frozen', False):
@@ -17,12 +20,22 @@ else:
     app = Flask(__name__)
     exe_dir = os.path.abspath(".")
 
+load_dotenv(os.path.join(exe_dir, '.env'))
+backend_host = os.getenv('BACKEND_HOST')
+
 # Ensure 'instance' folder exists
 instance_dir = exe_dir
 os.makedirs(instance_dir, exist_ok=True)
 
 app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app, async_mode='threading')
+
+
+@socketio.event
+def message(data):
+    emit('my_response',
+         {'data': data['data']}, broadcast=True)
+
 
 # --- Database setup ---
 db_path = os.path.join(instance_dir, "NoteApp.db")
@@ -103,7 +116,18 @@ def quit_app(icon_, item):
 
 
 tray_icon = Image.open(resource_path("tray_icon-backend.png"))
-menu = Menu(MenuItem("Quit", quit_app))
+
+
+def open_backend(icon_, item):
+    webbrowser.open(backend_host)
+
+
+menu = Menu(
+    MenuItem("> Open Backend", open_backend),
+    Menu.SEPARATOR,
+    MenuItem("Quit", quit_app)
+)
+
 icon = Icon("NoteApp", tray_icon, "NoteApp Backend", menu)
 
 # --- Start server in background thread ---

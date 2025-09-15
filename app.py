@@ -6,7 +6,9 @@ from ctypes import wintypes
 import requests
 from PySide6 import QtCore, QtWidgets
 from PySide6.QtGui import QIcon, QAction
-from PySide6.QtWidgets import QApplication, QSystemTrayIcon, QMenu
+from PySide6.QtWidgets import QApplication, QSystemTrayIcon, QMenu, QMessageBox
+from dotenv import load_dotenv
+import webbrowser
 
 # WinAPI constants
 user32 = ctypes.windll.user32
@@ -14,6 +16,31 @@ MOD_NONE = 0
 VK_F9 = 0x78  # F9 key
 WM_HOTKEY = 0x0312
 HOTKEY_ID = 1  # arbitrary id for the hotkey
+
+
+def resource_path(relative_path: str) -> str:
+    if hasattr(sys, '_MEIPASS'):
+        # PyInstaller bundle
+        return os.path.join(sys._MEIPASS, relative_path)
+    return os.path.join(os.path.abspath("."), relative_path)
+
+
+# --- Flask app setup ---
+if getattr(sys, 'frozen', False):
+    exe_dir = os.path.dirname(sys.executable)
+else:
+    exe_dir = os.path.abspath(".")
+
+# Ensure .env file path
+env_path = resource_path(os.path.join(exe_dir, ".env"))
+
+# Load the environment variables from the .env file
+if os.path.exists(env_path):
+    load_dotenv(env_path)
+else:
+    print(f"[WARN] .env file not found at {env_path}")
+
+backend_host = os.getenv("BACKEND_HOST", "http://127.0.0.1:5000")
 
 
 # ctypes structs to read native MSG
@@ -38,8 +65,8 @@ class WinHotkeyFilter(QtCore.QAbstractNativeEventFilter):
         super().__init__()
         self.window = window
 
-    def nativeEventFilter(self, eventType, message):
-        if eventType == b"windows_generic_MSG":
+    def nativeEventFilter(self, event_type, message):
+        if event_type == b"windows_generic_MSG":
             try:
                 msg = ctypes.cast(int(message), ctypes.POINTER(MSG)).contents
                 if msg.message == WM_HOTKEY and msg.wParam == HOTKEY_ID:
@@ -122,7 +149,7 @@ class InputWindow(QtWidgets.QWidget):
         print(f"Submitted: {text1}, {text2}")
 
         try:
-            req = requests.post("http://192.168.137.51:5000/submit", json={
+            req = requests.post(f"{backend_host}/submit", json={
                 "category": text1,
                 "description": text2
             })
@@ -130,17 +157,22 @@ class InputWindow(QtWidgets.QWidget):
         except Exception as e:
             print("POST request failed:", e)
 
+            # Show an error message box
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Icon.Critical)
+            msg.setWindowTitle("Error")
+            msg.setText("Failed to submit data to the backend!")
+            msg.setInformativeText(str(e))  # optional: show exception details
+            msg.exec()
+
         # Clear fields and hide
         self.input1.clear()
         self.input2.clear()
         self.hide()
 
 
-def resource_path(relative_path: str) -> str:
-    if hasattr(sys, '_MEIPASS'):
-        # PyInstaller bundle
-        return os.path.join(sys._MEIPASS, relative_path)
-    return os.path.join(os.path.abspath("."), relative_path)
+def open_backend():
+    webbrowser.open(backend_host)
 
 
 def main():
@@ -157,8 +189,16 @@ def main():
 
     # Create the menu
     menu = QMenu()
-    action = QAction("A menu item")
-    menu.addAction(action)
+
+    backend_info_action = QAction(f"{backend_host}")
+    backend_info_action.setDisabled(True)
+    menu.addAction(backend_info_action)
+
+    backend_open_action = QAction(f"Open Backend")
+    backend_open_action.triggered.connect(open_backend)
+    menu.addAction(backend_open_action)
+
+    menu.addSeparator()
 
     # Add a Quit option to the menu.
     quit_action = QAction("Quit")
@@ -189,6 +229,20 @@ def main():
         def cleanup():
             user32.UnregisterHotKey(hwnd, HOTKEY_ID)
         app.aboutToQuit.connect(cleanup)
+
+    try:
+        test = requests.head(url=backend_host)
+    except Exception as e:
+        print("POST request failed:", e)
+
+        # Show an error message box
+        msg = QMessageBox()
+        msg.setIcon(QMessageBox.Icon.Critical)
+        msg.setWindowTitle("Error")
+        msg.setText("Failed to submit data to the backend!")
+        msg.setInformativeText(str(e))  # optional: show exception details
+        msg.exec()
+        sys.exit(1)
 
     sys.exit(app.exec())
 

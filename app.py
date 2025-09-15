@@ -54,24 +54,16 @@ class WinHotkeyFilter(QtCore.QAbstractNativeEventFilter):
 
 
 class DescriptionTextEdit(QtWidgets.QTextEdit):
-    enterPressed = QtCore.Signal()  # Enter triggers submit
+    enterPressed = QtCore.Signal()
 
     def keyPressEvent(self, event):
-
         if event.key() in (QtCore.Qt.Key.Key_Return, QtCore.Qt.Key.Key_Enter):
-
-            if event.modifiers() & QtCore.Qt.Modifier.CTRL:
-                # Ctrl+Enter → insert newline (default behavior)
-                super().keyPressEvent(event)
-
-            elif event.modifiers() == QtCore.Qt.NoModifier:
-                # Enter without modifiers → submit
+            if event.modifiers() == QtCore.Qt.NoModifier:
+                # Enter → submit
                 self.enterPressed.emit()
-            else:
-                # Any other modifier + Enter → insert newline
-                super().keyPressEvent(event)
-        else:
-            super().keyPressEvent(event)
+                # Stop propagation so a newline is not inserted
+                return
+        super().keyPressEvent(event)
 
 
 class InputWindow(QtWidgets.QWidget):

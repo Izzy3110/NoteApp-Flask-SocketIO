@@ -1,4 +1,19 @@
 @echo off
+:: Admin check
+net session >nul 2>&1
+if %errorLevel% neq 0 (
+    powershell -Command "Start-Process '%~f0' -Verb runAs"
+    exit /b
+)
+
+:: Make sure we're in the script folder
+cd /d "%~dp0"
+
+REM Upgrade pip and install dependencies
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+python -m pip install pyinstaller
+
 REM === Build both executables ===
 
 echo Building frontend...

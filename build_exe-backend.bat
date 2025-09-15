@@ -2,11 +2,6 @@
 REM === Build NoteApp Backend EXE (Windows) ===
 REM Requirements: Python + pip + PyInstaller installed
 
-REM Upgrade pip and install dependencies
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
-python -m pip install pyinstaller pystray pillow
-
 REM Build using PyInstaller
 pyinstaller --onefile --noconsole ^
 --name NoteApp-backend ^

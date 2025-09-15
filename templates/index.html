@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Notes Table</title>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.3/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.3.4/css/dataTables.bootstrap5.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
+    <script type="text/javascript" charset="utf-8">
+        var socket = io();
+        socket.on('connect', function() {
+            socket.emit('my event', {data: 'I\'m connected!'});
+        });
+
+        socket.on('my_response', function(msg, cb) {
+            $('#log').append('<br>' + $('<div/>').text(moment().format() + ': ' + msg.data.data).html());
+            if (cb)
+                cb();
+        });
+    </script>
+    <script src="{{ url_for('static', filename='moment-with-locales.js') }}"></script>
+
+<style>
+    .dsp_none {
+        display: none;
+    }
+
+</style>
+</head>
+<body>
+    <h1>Notes Table</h1>
+    <table id="notesTable" class="display" style="width:100%">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Category</th>
+                <th>Description</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+    </table>
+    <b>Selected:</b>
+    <div id="current_selected">None</div>
+    <div id="current_selected_actions" class="dsp_none">
+        <button id="current_selected_actions_delete_btn">Delete Selected</button>
+    </div>
+<script>
+let selected = []
+
+function setSelected(btn_element) {
+     $(btn_element).parent().parent().find("td").each(function(index, element) {
+        $(element).css({
+            "border": "1px solid orange"
+        })
+    })
+}
+
+function setUnselected(btn_element) {
+    $(btn_element).parent().parent().find("td").each(function(index, element) {
+        $(element).css({
+            "border": "inherit"
+        })
+    })
+}
+
+function addUnique(value) {
+    selected = [...new Set([...selected, value])];
+}
+
+function removeValue(value) {
+    selected = selected.filter(item => item !== value);
+}
+
+function autoSizeTextarea(textarea) {
+    textarea.style.height = 'auto';            // reset height
+    textarea.style.height = textarea.scrollHeight + 'px'; // set to scrollHeight
+}
+
+$(document).ready(function() {
+
+
+    var table = $('#notesTable').DataTable({
+        ajax: {
+            url: '/notes',
+            dataSrc: ''
+        },
+        columns: [
+            { data: 'id' },
+            { data: 'category', render: editableCell },
+            { data: 'description', render: editableCell },
+            {
+                data: null,
+                render: function(data, type, row) {
+                    return '<button class="delete-btn" data-id="' + row.id + '">Delete</button><button data-action="select" class="select-btn" data-id="' + row.id + '">Select</button>';
+                }
+            }
+        ],
+        drawCallback: function(settings) {
+            // Autosize all textareas after each draw
+            $('#notesTable textarea.edit-input').each(function() {
+                autoSizeTextarea(this);
+            });
+
+        }
+    });
+
+    socket.emit('message', {data: 'loaded!'});
+console.log("loaded!")
+
+    function editableCell(data, type, row, meta) {
+        // Use textarea for the description column (column index 2)
+        if (meta.col === 2) {
+            return `<textarea data-id="${row.id}" data-field="${meta.col}" class="edit-input" style="width:100%;height:60px;">${data}</textarea>`;
+        } else {
+            return `<input type="text" value="${data}" data-id="${row.id}" data-field="${meta.col}" class="edit-input">`;
+        }
+    }
+
+
+    $('#notesTable').on('input', 'textarea.edit-input', function() {
+        autoSizeTextarea(this);
+    });
+
+    $('#notesTable').on('change', '.edit-input', function() {
+        var id = $(this).data('id');
+        var col = $(this).data('field') == 1 ? 'category' : 'description';
+        var value = $(this).val();
+        console.log("on change")
+        $.ajax({
+            url: '/notes/' + id,
+            type: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify({ [col]: value }),
+            success: function(res) {
+                console.log('Updated', res);
+            }
+        });
+
+        socket.emit('message', {data: 'edited no. #'+id});
+    });
+
+function update_current_selected() {
+    let div_current_selected = $("div#current_selected")
+    if(div_current_selected) {
+        current_selected_val = selected.join(", "); // join array into string
+        $(div_current_selected).html(current_selected_val)
+    }
+    if(selected.length > 0) {
+        
+                if($("#current_selected_actions").hasClass('dsp_none')) {
+            $("#current_selected_actions").removeClass('dsp_none')
+        }
+    } else {
+if(!$("#current_selected_actions").hasClass('dsp_none')) {
+            $("#current_selected_actions").addClass('dsp_none')
+        }
+        $(div_current_selected).html("None")
+    }
+}
+
+    $('#notesTable').on('click', '.select-btn', function() {
+
+        console.log("Selecting")
+        var id = $(this).data('id');
+        console.log(`id: ${id}`)
+        let current_tr = $(this).parent().parent()
+        if($(current_tr).hasClass('selected')) {
+            setUnselected(this)
+            $(this).parent().parent().removeClass('selected')
+            removeValue(id);
+            update_current_selected()
+        } else {
+            setSelected(this)
+            $(this).parent().parent().addClass('selected')
+            addUnique(id)
+            update_current_selected()
+        }
+        
+    })
+
+    $("#current_selected_actions_delete_btn").on('click', function(ev) {
+        // Ask for confirmation
+        if (!confirm("Are you sure you want to delete the selected items?")) {
+            return; // user canceled
+        }
+
+        $.each(selected, function(index, element) {
+            let id = element
+            $.ajax({
+                url: '/notes/' + id,
+                type: 'DELETE',
+                success: function(res) {
+                    console.log('Deleted', res);
+                    table.ajax.reload();
+                }
+            });
+            removeValue(id)    
+        })
+        
+        update_current_selected()
+    })
+
+    $('#notesTable').on('click', '.delete-btn', function() {
+        if (!confirm("Are you sure you want to delete the selected item?")) {
+            return; // user canceled
+        }
+
+        var id = $(this).data('id');
+        $.ajax({
+            url: '/notes/' + id,
+            type: 'DELETE',
+            success: function(res) {
+                console.log('Deleted', res);
+                table.ajax.reload();
+            }
+        });
+    });
+});
+</script>
+<style>
+    select[name='notesTable_length'] > label > select > option:nth-child(4) {
+        background: '#000';
+        color: '#FFF';
+    }
+</style>
+<div id="log"></div>
+</body>
+</html>

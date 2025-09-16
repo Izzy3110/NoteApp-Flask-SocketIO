@@ -33,8 +33,12 @@ if getattr(sys, 'frozen', False):
 else:
     exe_dir = os.path.abspath(".")
 
+env = "DEVELOPMENT"
 # Ensure .env file path
-env_path = resource_path(os.path.join(exe_dir, ".env"))
+if env == "DEVELOPMENT":
+    env_path = resource_path(os.path.join(exe_dir, "..", ".env"))
+else:
+    env_path = resource_path(os.path.join(exe_dir, ".env"))
 
 # Load the environment variables from the .env file
 if os.path.exists(env_path):

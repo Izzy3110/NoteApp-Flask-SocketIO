@@ -11,11 +11,17 @@ python -m pip install pyinstaller
 REM === Build both executables ===
 
 echo Building frontend...
+cd app
 call build_exe.bat
+xcopy /y "dist\NoteApp.exe" "..\dist\"
+cd ..
 
 echo.
 echo Building backend...
+cd backend
 call build_exe-backend.bat
+xcopy /y "dist\NoteApp-backend.exe" "..\dist\"
+cd ..
 
 echo.
 echo All builds complete!
@@ -23,8 +29,8 @@ echo All builds complete!
 echo.
 echo Copying config...
 xcopy /y ".env" "dist\"
-xcopy /y "backend-install_service.ps1" "dist\"
-xcopy /y "backend-uninstall_service.ps1" "dist\"
+xcopy /y "backend\backend-install_service.ps1" "dist\"
+xcopy /y "backend\backend-uninstall_service.ps1" "dist\"
 
 robocopy tools dist\tools /MIR
 
@@ -46,8 +52,8 @@ if errorlevel 2 (
     echo "Installing service..."
     cd dist
 
-    powershell.exe -ExecutionPolicy Bypass -File "backend-uninstall_service.ps1"
-    powershell.exe -ExecutionPolicy Bypass -File "backend-install_service.ps1"
+    powershell.exe -ExecutionPolicy Bypass -File "backend\backend-uninstall_service.ps1"
+    powershell.exe -ExecutionPolicy Bypass -File "backend\backend-install_service.ps1"
 
     cd ..
     echo "Service installation finished!"

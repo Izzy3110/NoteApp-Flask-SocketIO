@@ -24,6 +24,34 @@
 </style>
 </head>
 <body>
+<div class="container-fluid">
+    <div class="row">
+        <button class="btn btn-primary" id="read_latest_btn">Read Latest Note</button>
+        <!-- TTS Controls -->
+        <div id="tts_controls" class="col-md-6" style="margin:10px 0; padding:10px; border:1px solid #ccc; ">
+            <h4>Text-to-Speech Settings</h4>
+
+            <label for="voiceSelect">Voice:</label>
+            <select id="voiceSelect"></select><br><br>
+
+            <label for="rateSlider">Rate: <span id="rateVal">1</span></label>
+            <input type="range" id="rateSlider" min="0.5" max="2" step="0.1" value="1"><br><br>
+
+            <label for="pitchSlider">Pitch: <span id="pitchVal">1</span></label>
+            <input type="range" id="pitchSlider" min="0" max="2" step="0.1" value="1"><br><br>
+
+            <label for="volumeSlider">Volume: <span id="volumeVal">1</span></label>
+            <input type="range" id="volumeSlider" min="0" max="1" step="0.1" value="1"><br><br>
+        </div>
+        <div id="tts_controls" class="col-md-6" style="margin:10px 0; padding:10px; border:1px solid #ccc; ">
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="cb_settings_autoreload_on_new_entry" checked>
+                <label class="form-check-label" for="cb_settings_autoreload_on_new_entry">settings_autoreload (on new entry)</label>
+            </div>
+        </div>
+    </div>
+</div>
+
     <h1>Notes Table</h1>
     <table id="notesTable" class="display" style="width:100%">
         <thead>
@@ -42,6 +70,64 @@
     </div>
 <script>
 let selected = []
+let voices = [];
+var app_settings = {}
+let app_settings_obj = {}
+
+function populateVoices() {
+    voices = speechSynthesis.getVoices();
+    const voiceSelect = document.getElementById('voiceSelect');
+    voiceSelect.innerHTML = '';
+    voices.forEach(v => {
+        const option = document.createElement('option');
+        option.value = v.name;
+        option.textContent = `${v.name} (${v.lang})`;
+        voiceSelect.appendChild(option);
+    });
+    if(app_settings_obj) {
+        if (app_settings_obj["settings_voice"] !== undefined) {
+            console.log(app_settings_obj["settings_voice"])
+            console.log($("#voiceSelect").find($("option")))
+            $("#voiceSelect").val(app_settings_obj["settings_voice"]).trigger("change")
+        }
+    }
+}
+
+populateVoices()
+
+// Listen for voiceschanged event
+speechSynthesis.onvoiceschanged = populateVoices;
+
+// Update slider labels dynamically
+['rate', 'pitch', 'volume'].forEach(type => {
+    const slider = document.getElementById(type + 'Slider');
+    const valLabel = document.getElementById(type + 'Val');
+    slider.addEventListener('input', () => {
+        valLabel.textContent = slider.value;
+    });
+});
+
+// Modified speakText function
+function speakText(text) {
+    if ('speechSynthesis' in window) {
+        const utterance = new SpeechSynthesisUtterance(text);
+
+        const voiceName = document.getElementById('voiceSelect').value;
+        if (voiceName && voices.length > 0) {
+            const selectedVoice = voices.find(v => v.name === voiceName);
+            if (selectedVoice) utterance.voice = selectedVoice;
+        }
+
+        // Get slider values
+        utterance.rate = parseFloat(document.getElementById('rateSlider').value);
+        utterance.pitch = parseFloat(document.getElementById('pitchSlider').value);
+        utterance.volume = parseFloat(document.getElementById('volumeSlider').value);
+
+        speechSynthesis.speak(utterance);
+    } else {
+        alert("Sorry, your browser does not support text-to-speech.");
+    }
+}
 
 function setSelected(btn_element) {
      $(btn_element).parent().parent().find("td").each(function(index, element) {
@@ -72,7 +158,50 @@ function autoSizeTextarea(textarea) {
     textarea.style.height = textarea.scrollHeight + 'px'; // set to scrollHeight
 }
 
+
+
+let ls_settings = localStorage.getItem("app_settings")
+if(ls_settings == null) {
+    app_settings_obj = {
+        "settings_autoreload_on_new_entry": true
+    }
+    app_settings_obj_str = JSON.stringify(app_settings_obj)
+    localStorage.setItem("app_settings", app_settings_obj_str)
+} else {
+    app_settings_obj_str = ls_settings
+    app_settings_obj = JSON.parse(app_settings_obj_str)
+}
+
+
+
 $(document).ready(function() {
+    $("#voiceSelect").on('change', function(ev) {
+        let voice_set = $(this).val()
+        app_settings_obj["settings_voice"] = voice_set
+        localStorage.setItem('app_settings', JSON.stringify(app_settings_obj))
+    })
+    $("#cb_settings_autoreload_on_new_entry").on('change', function(ev) {
+        let newState = $(this).prop('checked')
+        app_settings_obj["settings_autoreload_on_new_entry"] = newState
+        localStorage.setItem('app_settings', JSON.stringify(app_settings_obj))
+    })
+
+// Example usage for your "Read Latest Note" button
+$('#read_latest_btn').on('click', function() {
+    // Get DataTable instance
+    const table = $('#notesTable').DataTable();
+    
+    // Get all data and pick the last item
+    const allData = table.rows().data().toArray();
+    if (allData.length === 0) {
+        speakText("No notes available.");
+        return;
+    }
+
+    const latest = allData[allData.length - 1];
+    const text = `Latest note. Category: ${latest.category}. Description: ${latest.description}.`;
+    speakText(text);
+});
 
         socket.on('connect', function() {
             socket.emit('my event', {data: 'I\'m connected!'});

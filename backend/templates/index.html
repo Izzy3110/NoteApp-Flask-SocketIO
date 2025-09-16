@@ -123,6 +123,7 @@ function speakText(text) {
         utterance.pitch = parseFloat(document.getElementById('pitchSlider').value);
         utterance.volume = parseFloat(document.getElementById('volumeSlider').value);
 
+        console.log("try speak")
         speechSynthesis.speak(utterance);
     } else {
         alert("Sorry, your browser does not support text-to-speech.");
@@ -200,22 +201,60 @@ $('#read_latest_btn').on('click', function() {
 
     const latest = allData[allData.length - 1];
     const text = `Latest note. Category: ${latest.category}. Description: ${latest.description}.`;
+    console.log("speaking...")
+    console.log(text)
     speakText(text);
-});
+}
 
+// Example usage for your "Read Latest Note" button
+$('#read_latest_btn').on('click', function() {
+    speak_latest_note()
+});
+        
         socket.on('connect', function() {
             socket.emit('my event', {data: 'I\'m connected!'});
         });
 
         socket.on('my_response', function(msg, cb) {
-            console.log(Object.keys(msg))
-            console.log(msg["data"])
-            console.log(typeof(msg["data"]))
+            // console.log(Object.keys(msg))
+            // console.log(msg["data"])
+            // console.log(typeof(msg["data"]))
             msg_object = JSON.parse(msg["data"].replaceAll("'", '"'))
             msg_text = msg_object["data"]
-            console.log(msg_text)
+            // console.log(msg_text)
             if (msg_text == "New") {
-                window.location.reload()
+                // window.location.reload()
+                if ($.fn.dataTable.isDataTable('#notesTable')) {
+                    $('#notesTable').DataTable().destroy();
+
+                    var table = $('#notesTable').DataTable({
+                        ajax: {
+                            url: '/notes',
+                            dataSrc: ''
+                        },
+                        columns: [
+                            { data: 'id' },
+                            { data: 'category', render: editableCell },
+                            { data: 'description', render: editableCell },
+                            {
+                                data: null,
+                                render: function(data, type, row) {
+                                    return '<button class="delete-btn" data-id="' + row.id + '">Delete</button><button data-action="select" class="select-btn" data-id="' + row.id + '">Select</button>';
+                                }
+                            }
+                        ],
+                        stateSave: true,
+                        pageLength: -1,
+                        lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
+                        drawCallback: function(settings) {
+                            // Autosize all textareas after each draw
+                            $('#notesTable textarea.edit-input').each(function() {
+                                autoSizeTextarea(this);
+                            });
+                        }
+                    });
+                }
+
             }
             $('#log').append('<br>' + $('<div/>').text(moment().format() + ': ' + msg.data).html());
             if (cb)

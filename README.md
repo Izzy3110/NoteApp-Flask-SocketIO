@@ -19,5 +19,15 @@ I wanted a tool that wouldn't interrupt my workflow. There was always this thoug
 ## Key Functions
  - Take Notes of Ideas & Thoughts (Category & Description)
 
+## Technical
+ - Python Version (3.12.4 - Windows)
+ - Python Modules:
+   - Flask (3.1.2)
+   - Flask-SocketIO (5.5.1)
+   - Flask-SQLAlchemy (3.1.1)
+   - PySide6 (6.9.2)
+   - Pillow (11.3.0)
+
+
 ### Author: 
 ##### Sascha Frank (GitHub: [Izzy3110](https://github.com/Izzy3110))

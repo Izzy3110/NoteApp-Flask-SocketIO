@@ -13,4 +13,3 @@ backend.py
 
 echo.
 echo Build complete! EXE located in .\dist
-pause

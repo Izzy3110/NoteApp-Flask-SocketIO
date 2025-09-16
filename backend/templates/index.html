@@ -20,54 +20,103 @@
     .dsp_none {
         display: none;
     }
+    #main-container {
+        max-width: 95vw;
+    }
+    .p15r {
+        padding: 1.5rem;
+    }
+    .p4r {
+        padding: 4rem;
+    }
+    .p5r {
+        padding: 5rem;
+    }
 
+    #tts_settings_h4 {
+        margin-left: 1rem;
+    }
+
+    select[name='notesTable_length'] > label > select > option:nth-child(4) {
+        background: '#000';
+        color: '#FFF';
+    }
 </style>
 </head>
 <body>
-<div class="container-fluid">
+<div id="main-container" class="container-fluid mx-5 my-5">
     <div class="row">
-        <button class="btn btn-primary" id="read_latest_btn">Read Latest Note</button>
-        <!-- TTS Controls -->
-        <div id="tts_controls" class="col-md-6" style="margin:10px 0; padding:10px; border:1px solid #ccc; ">
-            <h4>Text-to-Speech Settings</h4>
+        <div class="col-md-12 card p15r">
+            <button class="btn btn-primary" id="read_latest_btn">Read Latest Note</button>
 
-            <label for="voiceSelect">Voice:</label>
-            <select id="voiceSelect"></select><br><br>
+            <h4 id="tts_settings_h4">&raquo; Text-to-Speech Settings (click to expand)</h4>
+            <script>
+                $("#tts_settings_h4").on('click', function() {
+                    $("#tts_controls, #tts_controls_settings").toggleClass('dsp_none')
+                })
+            </script>
+            <!-- TTS Controls -->
+            <div id="tts_controls" class="col-md-6 card p3 dsp_none">
+                
 
-            <label for="rateSlider">Rate: <span id="rateVal">1</span></label>
-            <input type="range" id="rateSlider" min="0.1" max="2" step="0.1" value="1"><br><br>
+                <label for="voiceSelect">Voice:</label>
+                <select id="voiceSelect"></select><br><br>
 
-            <label for="pitchSlider">Pitch: <span id="pitchVal">1</span></label>
-            <input type="range" id="pitchSlider" min="0" max="2" step="0.1" value="1"><br><br>
+                <label for="rateSlider">Rate: <span id="rateVal">1</span></label>
+                <input type="range" id="rateSlider" min="0.1" max="2" step="0.1" value="1"><br><br>
 
-            <label for="volumeSlider">Volume: <span id="volumeVal">1</span></label>
-            <input type="range" id="volumeSlider" min="0" max="1" step="0.1" value="1" disabled><br><br>
-        </div>
-        <div id="tts_controls" class="col-md-6" style="margin:10px 0; padding:10px; border:1px solid #ccc; ">
-            <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" id="cb_settings_autoreload_on_new_entry">
-                <label class="form-check-label" for="cb_settings_autoreload_on_new_entry">settings_autoreload (on new entry)</label>
+                <label for="pitchSlider">Pitch: <span id="pitchVal">1</span></label>
+                <input type="range" id="pitchSlider" min="0" max="2" step="0.1" value="1"><br><br>
+
+                <label for="volumeSlider">Volume: <span id="volumeVal">1</span></label>
+                <input type="range" id="volumeSlider" min="0" max="1" step="0.1" value="1" disabled><br><br>
+            </div>
+            <div id="tts_controls_settings" class="container-fluid col-md-4 dsp_none">
+                <div class="row">
+                    <div class="col">
+
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-5 card">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="cb_settings_autoreload_on_new_entry">
+                            <label class="form-check-label" for="cb_settings_autoreload_on_new_entry">settings_autoreload (on new entry)</label>
+                        </div>
+                    </div>
+
+                </div>
             </div>
         </div>
     </div>
+    <div class="row">
+        <div class="col-md-12 card p15r">
+            <h1>Notes Table</h1>
+            <table id="notesTable" class="display" style="width:100%">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Category</th>
+                        <th>Description</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+            </table>
+            <b>Selected:</b>
+            <div id="current_selected">None</div>
+            <div id="current_selected_actions" class="dsp_none">
+                <button id="current_selected_actions_delete_btn">Delete Selected</button>
+            </div>
+        </div>
+    </div>
+        <div class="row">
+            <div class="col-md-12 card p15r">
+                <div id="log"></div>
+            </div>
+        </div>
 </div>
 
-    <h1>Notes Table</h1>
-    <table id="notesTable" class="display" style="width:100%">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Category</th>
-                <th>Description</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-    </table>
-    <b>Selected:</b>
-    <div id="current_selected">None</div>
-    <div id="current_selected_actions" class="dsp_none">
-        <button id="current_selected_actions_delete_btn">Delete Selected</button>
-    </div>
+
 <script>
 let selected = []
 let voices = [];
@@ -259,7 +308,7 @@ function speak_latest_note() {
     // Get all data and pick the last item
     const allData = table.rows().data().toArray();
     if (allData.length === 0) {
-        speakText("No notes available.");
+        speakText("No notes available. Press F9 while the NoteApp.exe is running to record a new Note of your thoughts or whatever you like.");
         return;
     }
 
@@ -469,12 +518,5 @@ if(!$("#current_selected_actions").hasClass('dsp_none')) {
     });
 });
 </script>
-<style>
-    select[name='notesTable_length'] > label > select > option:nth-child(4) {
-        background: '#000';
-        color: '#FFF';
-    }
-</style>
-<div id="log"></div>
 </body>
 </html>

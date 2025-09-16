@@ -86,8 +86,8 @@ function populateVoices() {
     });
     if(app_settings_obj) {
         if (app_settings_obj["settings_voice"] !== undefined) {
-            console.log(app_settings_obj["settings_voice"])
-            console.log($("#voiceSelect").find($("option")))
+            //console.log(app_settings_obj["settings_voice"])
+            // console.log($("#voiceSelect").find($("option")))
             $("#voiceSelect").val(app_settings_obj["settings_voice"]).trigger("change")
         }
     }

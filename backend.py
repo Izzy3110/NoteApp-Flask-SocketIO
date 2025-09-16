@@ -88,8 +88,6 @@ app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(
     app,
     async_mode='threading',
-    logger=True,          # SocketIO debug logs
-    engineio_logger=True  # EngineIO debug logs
 )
 
 

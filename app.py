@@ -10,6 +10,8 @@ from PySide6.QtWidgets import QApplication, QSystemTrayIcon, QMenu, QMessageBox
 from dotenv import load_dotenv
 import webbrowser
 
+
+
 # WinAPI constants
 user32 = ctypes.windll.user32
 MOD_NONE = 0
@@ -186,6 +188,14 @@ def main():
     tray = QSystemTrayIcon()
     tray.setIcon(icon)
     tray.setVisible(True)
+
+    # Show balloon tip after startup
+    tray.showMessage(
+        "App Started",
+        f"Backend: {backend_host}",
+        QSystemTrayIcon.MessageIcon.Information,
+        5000  # duration in ms
+    )
 
     # Create the menu
     menu = QMenu()

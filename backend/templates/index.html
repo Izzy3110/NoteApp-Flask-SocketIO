@@ -176,6 +176,21 @@ if(ls_settings == null) {
 
 
 $(document).ready(function() {
+    $("#rateSlider").on('change', function(ev) {
+        let rate_set = $(this).val()
+        app_settings_obj["settings_voice_rate"] = rate_set
+        localStorage.setItem('app_settings', JSON.stringify(app_settings_obj))
+    })
+    $("#pitchSlider").on('change', function(ev) {
+        let pitch_set = $(this).val()
+        app_settings_obj["settings_voice_pitch"] = pitch_set
+        localStorage.setItem('app_settings', JSON.stringify(app_settings_obj))
+    })
+    $("#volumeSlider").on('change', function(ev) {
+        let volume_set = $(this).val()
+        app_settings_obj["settings_voice_volume"] = volume_set
+        localStorage.setItem('app_settings', JSON.stringify(app_settings_obj))
+    })
     $("#voiceSelect").on('change', function(ev) {
         let voice_set = $(this).val()
         app_settings_obj["settings_voice"] = voice_set
@@ -186,12 +201,61 @@ $(document).ready(function() {
         app_settings_obj["settings_autoreload_on_new_entry"] = newState
         localStorage.setItem('app_settings', JSON.stringify(app_settings_obj))
     })
+    
+    $("#cb_settings_autoreload_on_new_entry").prop('disabled', 'disabled')
+    if(Object.keys(app_settings_obj).includes("settings_autoreload_on_new_entry")) {
+        let cb_state = app_settings_obj["settings_autoreload_on_new_entry"]
+        $("#cb_settings_autoreload_on_new_entry").prop('checked', cb_state).trigger('change')
+    }
+    
+    
+    $("#rateSlider").prop('disabled', 'disabled')
+    if(Object.keys(app_settings_obj).includes("settings_voice_rate")) {
+        $("#rateSlider").val(app_settings_obj["settings_voice_rate"])
+        $("#rateVal").text(app_settings_obj["settings_voice_rate"])
+        $("#rateSlider").prop('disabled', '')
+        $("#rateSlider").removeAttr('disabled')
+    } else {
+        app_settings_obj["settings_voice_rate"] = 1
+        localStorage.setItem("app_settings", JSON.stringify(app_settings_obj))
+        $("#rateSlider").removeAttr('disabled')
+    }
 
-// Example usage for your "Read Latest Note" button
-$('#read_latest_btn').on('click', function() {
+
+    $("#pitchSlider").prop('disabled', 'disabled')
+    if(Object.keys(app_settings_obj).includes("settings_voice_pitch")) {
+        $("#pitchSlider").val(app_settings_obj["settings_voice_pitch"])
+        $("#pitchVal").text(app_settings_obj["settings_voice_pitch"])
+        $("#pitchSlider").prop('disabled', '')
+        $("#pitchSlider").removeAttr('disabled')
+    } else {
+        app_settings_obj["settings_voice_pitch"] = 1
+        localStorage.setItem("app_settings", JSON.stringify(app_settings_obj))
+        $("#pitchSlider").removeAttr('disabled')
+    }
+
+
+    $("#volumeSlider").prop('disabled', 'disabled')
+    if(Object.keys(app_settings_obj).includes("settings_voice_volume")) {
+        $("#volumeSlider").val(app_settings_obj["settings_voice_volume"])
+        $("#volumeVal").text(app_settings_obj["settings_voice_volume"])
+        $("#volumeSlider").prop('disabled', '')
+        $("#volumeSlider").removeAttr('disabled')
+    } else {
+        app_settings_obj["settings_voice_volume"] = 1
+        localStorage.setItem("app_settings", JSON.stringify(app_settings_obj))
+        $("#volumeSlider").removeAttr('disabled')
+    }
+
+    $("#cb_settings_autoreload_on_new_entry").prop('disabled', '')
+    $("#cb_settings_autoreload_on_new_entry").removeAttr('disabled')
+
+
+function speak_latest_note() {
+    console.log("speakig latest note")
     // Get DataTable instance
     const table = $('#notesTable').DataTable();
-    
+
     // Get all data and pick the last item
     const allData = table.rows().data().toArray();
     if (allData.length === 0) {
@@ -285,7 +349,6 @@ $('#read_latest_btn').on('click', function() {
             $('#notesTable textarea.edit-input').each(function() {
                 autoSizeTextarea(this);
             });
-
         }
     });
 
